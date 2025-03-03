@@ -127,3 +127,5 @@ INSTALLED_APPS += [
     'rest_framework',
     'core',
 ]
+
+AUTH_USER_MODEL = 'core.User' # Informing Django to use my custom User
