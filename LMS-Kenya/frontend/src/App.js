@@ -1,25 +1,16 @@
-import logo from './logo.svg';
-import './App.css';
-
+import React, { useEffect, useState } from 'react';
 function App() {
+  const [courses, setCourses] = useState([]);
+  useEffect(() => {
+    fetch('http://localhost:8000/api/courses/')
+      .then(res => res.json())
+      .then(data => setCourses(data));
+  }, []);
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="p-4">
+      <h1 className="text-2xl">WABUKOWABUKO SCHOOL LMS</h1>
+      <ul>{courses.map(course => <li key={course.id}>{course.name}</li>)}</ul>
     </div>
   );
 }
-
 export default App;

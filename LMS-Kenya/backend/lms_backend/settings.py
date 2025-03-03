@@ -126,6 +126,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 INSTALLED_APPS += [
     'rest_framework',
     'core',
+    'corsheaders',
 ]
 
 AUTH_USER_MODEL = 'core.User' # Informing Django to use my custom User
+
+MIDDLEWARE += [
+    'corsheaders.middleware.CorsMiddleware',
+]
+
+CORS_ALLOWED_ORIGINS = ['http://localhost:3000']
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
