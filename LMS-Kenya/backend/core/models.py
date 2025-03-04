@@ -19,3 +19,13 @@ class Course(models.Model):
 class StudentCourse(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'student'})
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    
+class Assignment(models.Model):
+    title = models.CharField(max_length=100)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    due_date = models.DateTimeField()
+    
+class Timetable(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    day = models.CharField(max_length=10)  # e.g., "Monday"
+    time = models.TimeField()

@@ -127,6 +127,9 @@ INSTALLED_APPS += [
     'rest_framework',
     'core',
     'corsheaders',
+    'rest_framework.authtoken', 
+    'dj_rest_auth',
+    'rest_framework_simplejwt',
 ]
 
 AUTH_USER_MODEL = 'core.User' # Informing Django to use my custom User
@@ -139,3 +142,10 @@ CORS_ALLOWED_ORIGINS = ['http://localhost:3000']
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ]
+}
