@@ -40,6 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',         # For APIs
     'corsheaders',            # For React frontend
+    'users.apps.UsersConfig',      # Custom app
+    'courses.apps.CoursesConfig',  # Custom app
+    'messaging.apps.MessagingConfig',  # Custom app
 ]
 
 MIDDLEWARE = [
@@ -134,3 +137,14 @@ CORS_ALLOWED_ORIGINS = [
 
 # Static files (for React build and offline resources)
 STATICFILES_DIRS = [BASE_DIR / "static"]  # Point to WebLMS/static for offline files
+
+# Add this near the bottom of settings.py
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
