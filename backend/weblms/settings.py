@@ -26,7 +26,11 @@ SECRET_KEY = 'django-insecure-h*gs1c1y_7z0=+2x-xfu^(9&73r55ey%v5@s7j)&uupi0wlmip
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    'localhost', 
+    "http://localhost:3000"
+    '127.0.0.1'
+]
 
 
 # Application definition
@@ -39,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',         # For APIs
+    'rest_framework.authtoken',  # For token authentication
     'corsheaders',            # For React frontend
     'users.apps.UsersConfig',      # Custom app
     'courses.apps.CoursesConfig',  # Custom app

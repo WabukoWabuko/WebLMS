@@ -4,9 +4,8 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework import status
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
 from .models import User
 from .serializers import UserSerializer
 
@@ -21,14 +20,22 @@ class RegisterView(generics.CreateAPIView):
                 # Validate password
                 validate_password(request.data.get('password'), user=User)
                 self.perform_create(serializer)
+                user = serializer.instance
+                # Create or get token for the new user
+                token, created = Token.objects.get_or_create(user=user)
                 headers = self.get_success_headers(serializer.data)
                 return Response({
                     'message': 'User registered successfully',
                     'user': serializer.data,
+                    'token': token.key,
+                    'role': user.role,
+                    'user_code': user.user_code,
                 }, status=status.HTTP_201_CREATED, headers=headers)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except ValidationError as e:
             return Response({'password': list(e.messages)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def perform_create(self, serializer):
         # Set password before saving (since User model requires it)
@@ -53,9 +60,15 @@ class CustomAuthToken(ObtainAuthToken):
         try:
             user = None
             if username:
-                user = User.objects.get(username=username)
+                try:
+                    user = User.objects.get(username=username)
+                except User.DoesNotExist:
+                    return Response({'error': f'Username "{username}" not found'}, status=status.HTTP_401_UNAUTHORIZED)
             elif user_code:
-                user = User.objects.get(user_code=user_code)
+                try:
+                    user = User.objects.get(user_code=user_code)
+                except User.DoesNotExist:
+                    return Response({'error': f'User code "{user_code}" not found'}, status=status.HTTP_401_UNAUTHORIZED)
 
             if user and user.check_password(password):
                 token, created = Token.objects.get_or_create(user=user)
@@ -64,7 +77,7 @@ class CustomAuthToken(ObtainAuthToken):
                     'role': user.role,
                     'user_id': user.id,
                     'user_code': user.user_code,
-                })
+                }, status=status.HTTP_200_OK)
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-        except User.DoesNotExist:
-            return Response({'error': 'User not found'}, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
