@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-function TeacherDashboard() {
+function TeacherDashboard({ userCode }) {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -28,7 +28,7 @@ function TeacherDashboard() {
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <h1 className="text-2xl font-bold mb-4">Teacher Dashboard</h1>
-      <p>Welcome, Teacher! Create courses, manage classes, and send notifications.</p>
+      <p>Welcome, Teacher! Your User Code: {userCode}. Create courses, manage classes, and send notifications.</p>
       <h2 className="text-xl font-semibold mt-6 mb-2">Your Courses</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {courses.map(course => (
