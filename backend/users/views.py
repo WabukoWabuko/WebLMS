@@ -4,10 +4,13 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework import status
-from django.core.exceptions import PermissionDenied, ValidationError
-from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import PermissionDenied
 from .models import User
 from .serializers import UserSerializer
+import logging
+
+# Set up logging for debugging
+logger = logging.getLogger(__name__)
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = UserSerializer
@@ -17,11 +20,13 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         try:
             if serializer.is_valid():
-                # Validate password
-                validate_password(request.data.get('password'), user=User)
+                # Check if user_code is provided; if not, let the model generate it
+                user_code = request.data.get('user_code')
+                if not user_code:
+                    # Ensure the model generates a unique user_code via the signal
+                    pass  # Signal in models.py handles this
                 self.perform_create(serializer)
                 user = serializer.instance
-                # Create or get token for the new user
                 token, created = Token.objects.get_or_create(user=user)
                 headers = self.get_success_headers(serializer.data)
                 return Response({
@@ -32,13 +37,11 @@ class RegisterView(generics.CreateAPIView):
                     'user_code': user.user_code,
                 }, status=status.HTTP_201_CREATED, headers=headers)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except ValidationError as e:
-            return Response({'password': list(e.messages)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Registration error: {str(e)}")
+            return Response({'error': 'Registration failed. Contact support.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def perform_create(self, serializer):
-        # Set password before saving (since User model requires it)
         user = serializer.save()
         user.set_password(serializer.validated_data['password'])
         user.save()
@@ -60,15 +63,9 @@ class CustomAuthToken(ObtainAuthToken):
         try:
             user = None
             if username:
-                try:
-                    user = User.objects.get(username=username)
-                except User.DoesNotExist:
-                    return Response({'error': f'Username "{username}" not found'}, status=status.HTTP_401_UNAUTHORIZED)
+                user = User.objects.get(username=username)
             elif user_code:
-                try:
-                    user = User.objects.get(user_code=user_code)
-                except User.DoesNotExist:
-                    return Response({'error': f'User code "{user_code}" not found'}, status=status.HTTP_401_UNAUTHORIZED)
+                user = User.objects.get(user_code=user_code)
 
             if user and user.check_password(password):
                 token, created = Token.objects.get_or_create(user=user)
@@ -79,5 +76,8 @@ class CustomAuthToken(ObtainAuthToken):
                     'user_code': user.user_code,
                 }, status=status.HTTP_200_OK)
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Login error: {str(e)}")
+            return Response({'error': 'Login failed. Contact support.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
